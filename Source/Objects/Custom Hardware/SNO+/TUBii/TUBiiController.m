@@ -17,6 +17,9 @@
 #define TUBII_GUI_GTDELAY_TAB_NUM 4
 #define TUBII_GUI_CLOCK_TAB_NUM 6
 
+NSInteger *syncMaskValGlobal;
+NSInteger *aSyncMaskValGlobal;
+
 @implementation TUBiiController
 
 - (id)init{
@@ -367,19 +370,25 @@
     NSUInteger syncMask;
     NSUInteger asyncMask;
     @try {
-        syncMask = [model syncTrigMask];
+        syncMask = syncMaskValGlobal;
+//        syncMask = [model syncTrigMask];
     } @catch(NSException *exception) {
         [self log_error:exception];
         return;
     }
     @try {
-        asyncMask = [model asyncTrigMask];
+        asyncMask = aSyncMaskValGlobal;
+//        asyncMask = [model asyncTrigMask];
     } @catch(NSException *exception) {
         [self log_error:exception];
         return;
     }
     NSUInteger trigMaskVal = (syncMask | asyncMask);
     NSUInteger syncMaskVal = 16777215 - asyncMask;
+
+    NSLogColor([NSColor redColor], @"trigMaskVal: 0x%X\n",trigMaskVal);
+    NSLogColor([NSColor redColor], @"syncMaskVal: 0x%X\n",syncMaskVal);
+
     [self SendBitInfo:trigMaskVal FromBit:0 ToBit:24 ToCheckBoxes:TrigMaskSelect];
     [self SendBitInfo:syncMaskVal FromBit:24 ToBit:48 ToCheckBoxes:TrigMaskSelect];
 }
@@ -387,6 +396,9 @@
     //Makes the trigger mask hardware state match the corresponding GUI element
     NSUInteger trigMaskVal = [self GetBitInfoFromCheckBoxes:TrigMaskSelect FromBit:0 ToBit:24];
     NSUInteger syncMaskVal = [self GetBitInfoFromCheckBoxes:TrigMaskSelect FromBit:24 ToBit:48];
+
+    NSLogColor([NSColor redColor], @"trigMaskVal: 0x%X\n",trigMaskVal);
+    NSLogColor([NSColor redColor], @"syncMaskVal: 0x%X\n",syncMaskVal);
 
     NSUInteger syncMask=0, asyncMask=0;
     for(int i=0; i<24; i++)
@@ -410,6 +422,8 @@
     }
     
     @try{
+        syncMaskValGlobal = syncMask;
+        aSyncMaskValGlobal = asyncMask;
         [model setTrigMask:syncMask setAsyncMask:asyncMask];
     } @catch(NSException *exception) {
         [self log_error:exception];
